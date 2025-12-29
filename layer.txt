@@ -1,0 +1,32 @@
+import json
+import pandas as pd 
+import boto3 
+client = boto3.client('s3')
+
+bucketname = 'layerdemo-lambda-ai'
+filename = 'empdata1.csv'
+
+def download_file():
+    client.download_file(bucketname, filename, '/tmp/{}'.format(filename))
+    
+def data_process(df):
+    df = df.dropna()
+    df = df.drop_duplicates()
+    return df
+
+def write_to_tmp(df):
+    df.to_csv('/tmp/{}'.format(filename), index=False)
+
+def upload_file():
+    client.upload_file('/tmp/{}'.format(filename), bucketname, filename)
+
+def lambda_handler(event, context):
+    download_file()
+    df = pd.read_csv('/tmp/{}'.format(filename))
+    df = data_process(df)
+    write_to_tmp(df)
+    upload_file()
+    print('done')
+    
+    
+   
